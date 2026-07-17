@@ -1,6 +1,6 @@
 [project]
 name = "pycalaos"
-version = "0.0.29"
+version = "0.0.30"
 authors = [
 	{ name = "Willow Maccagnoni", email = "willow.maccagnoni@gmail.com" },
 ]
@@ -19,8 +19,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/willoma/pycalaos"
-Repository = "https://github.com/willoma/pycalaos.git"
+Homepage = "https://github.com/nico6770/pycalaos"
+Repository = "https://github.com/nico6770/pycalaos.git"
 
 [build-system]
 requires = ["hatchling"]
