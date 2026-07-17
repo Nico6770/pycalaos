@@ -2,29 +2,36 @@ from enum import Enum, StrEnum
 
 from .common import Item
 
+
 class InPlageHoraire(Item):
     def _translate(self, state: str):
         return state == "true"
+
 
 class InputAnalog(Item):
     def _translate(self, state: str):
         return float(state)
 
+
 class InputString(Item):
     pass
+
 
 class InputSwitch(Item):
     def _translate(self, state: str):
         return state == "true"
+
 
 class InputSwitchLongPressState(Enum):
     NONE = 0
     SHORT = 1
     LONG = 2
 
+
 class InputSwitchLongPress(Item):
     def _translate(self, state: str):
         return InputSwitchLongPressState(int(state))
+
 
 class InputSwitchTripleState(Enum):
     NONE = 0
@@ -32,25 +39,31 @@ class InputSwitchTripleState(Enum):
     DOUBLE = 2
     TRIPLE = 3
 
+
 class InputSwitchTriple(Item):
     def _translate(self, state: str):
         return InputSwitchTripleState(int(state))
 
     def internal_from_event(self, state):
         translated = self._translate(state)
+
         if translated == InputSwitchTripleState.NONE:
             self._state = translated
             return False
+
         self._state = InputSwitchTripleState.NONE
         return translated
+
 
 class InputTemp(Item):
     def _translate(self, state: str):
         return float(state)
 
+
 class InputTime(Item):
     def _translate(self, state: str):
         return state == "true"
+
 
 class InputTimer(Item):
     def _translate(self, state: str):
@@ -67,6 +80,7 @@ class InputTimer(Item):
     def reset(self, hours, minutes, seconds, milliseconds):
         self._send(f"{hours}:{minutes}:{seconds}:{milliseconds}")
         self._update_state()
+
 
 class InternalBool(Item):
     def _translate(self, state: str):
@@ -92,6 +106,7 @@ class InternalBool(Item):
         print(cmd)
         self._update_state()
 
+
 class InternalInt(Item):
     def _translate(self, state: str):
         return int(state)
@@ -114,10 +129,12 @@ class InternalInt(Item):
             self._send(f"dec {value}")
         self._update_state()
 
+
 class InternalString(Item):
     def set(self, value):
         self._send(value)
         self._state = value
+
 
 class OutputLight(Item):
     def _translate(self, state: str):
@@ -142,6 +159,7 @@ class OutputLight(Item):
         self._send(cmd)
         print(cmd)
         self._update_state()
+
 
 class OutputLightDimmer(Item):
     def _translate(self, state: str):
@@ -212,12 +230,14 @@ class OutputLightDimmer(Item):
         self._send("hold stop")
         self._update_state()
 
+
 class OutputShutterAction(StrEnum):
     STATIONARY = ""
     UP = "up"
     DOWN = "down"
     STOP = "stop"
     CALIBRATION = "calibrate"
+
 
 class OutputShutterSmart(Item):
     def _translate(self, state: str):
@@ -275,6 +295,7 @@ class OutputShutterSmart(Item):
     def calibrate(self):
         self._send(f"calibrate")
         self._update_state()
+
 
 class Scenario(Item):
     def _translate(self, state: str):

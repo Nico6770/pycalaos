@@ -2,6 +2,7 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class Event:
     """An item state change event"""
 
@@ -30,6 +31,7 @@ class Event:
     def state(self):
         """State for this event"""
         return self._state
+
 
 class Item:
     """An item in the Calaos installation"""
@@ -122,6 +124,7 @@ class Item:
 
     def _translate(self, state: str):
         return state
+
 
 class Default(Item):
     pass
