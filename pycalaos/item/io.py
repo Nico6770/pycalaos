@@ -44,6 +44,18 @@ class InputSwitchTriple(Item):
     def _translate(self, state: str):
         return InputSwitchTripleState(int(state))
 
+    def internal_from_event(self, state):
+        translated = self._translate(state)
+
+        if translated == InputSwitchTripleState.NONE:
+            if translated == self._state:
+                return False
+            self._state = translated
+            return True
+
+        self._state = translated
+        return True
+
 
 class InputTemp(Item):
     def _translate(self, state: str):
@@ -260,7 +272,7 @@ class OutputShutterSmart(Item):
 
     def up(self, value=0):
         if value == 0:
-            self._send(f"up")
+            self._send("up")
             return
         else:
             if value < 1:
@@ -272,7 +284,7 @@ class OutputShutterSmart(Item):
 
     def down(self, value=0):
         if value == 0:
-            self._send(f"down")
+            self._send("down")
             return
         else:
             if value < 1:
@@ -283,7 +295,7 @@ class OutputShutterSmart(Item):
         self._update_state()
 
     def calibrate(self):
-        self._send(f"calibrate")
+        self._send("calibrate")
         self._update_state()
 
 
