@@ -14,15 +14,6 @@ class Room:
     """A room in the Calaos configuration"""
 
     def __init__(self, name: str, type: str):
-        """Initialize the room
-
-        Parameters:
-            name (str):
-                Name of the room
-
-            type (str):
-                Type of the room
-        """
         self._name = name
         self._type = type
         self._items = []
@@ -43,16 +34,7 @@ class Room:
         return self._items
 
     def _add_item(self, item):
-        """Add a new item in the room
-
-        Parameters:
-            item (pycalaos.item.Item):
-                The item to add
-
-        Return nothing
-        """
         self._items.append(item)
-
 
 class _Conn:
     def __init__(self, uri, username, password):
@@ -66,23 +48,10 @@ class _Conn:
         response = requests.post(self._uri, verify=False, json=request)
         return response.json()
 
-
 class Client:
     """A Calaos client"""
 
     def __init__(self, uri: str, username: str, password: str):
-        """Initialize the client and load the home configuration and state.
-
-        Parameters:
-            uri (str):
-                URI of the Calaos server (usually, "http[s]://A.B.C.D")
-
-            username (str):
-                Username to connect to the Calaos server
-
-            password (str):
-                Password to connect to the Calaos server
-        """
         self._conn = _Conn(uri, username, password)
         self._polling_id = None
         self.reload_home()
@@ -91,13 +60,6 @@ class Client:
         return f"Calaos Client with {len(self.rooms)} rooms"
 
     def reload_home(self):
-        """Reload the complete home configuration, resetting rooms and items
-
-        This could be necessary if the Calaos server is reconfigured with
-        Calaos Installer and the client is not restarted).
-
-        Return nothing
-        """
         _LOGGER.debug("Getting the whole home")
         resp = self._conn.send({"action": "get_home"})
         rooms = []
@@ -124,14 +86,8 @@ class Client:
         return self.update_all()
 
     def update_all(self):
-        """Check all states and return events
-
-        Return events for states changes (list of pycalaos.item.common.Event)
-        """
         _LOGGER.debug("Getting all states from known items")
-        resp = self._conn.send(
-            {"action": "get_state", "items": list(self.items.keys())}
-        )
+        resp = self._conn.send({"action": "get_state", "items": list(self.items.keys())})
         events = []
         for kv in resp.items():
             try:
@@ -139,47 +95,36 @@ class Client:
             except KeyError:
                 _LOGGER.debug(f"Calaos event with unknown ID: {kv[0]}")
                 continue
-
             changed = item.internal_set_state(kv[1])
             if changed:
                 events.append(Event(self.items[kv[0]]))
         return events
 
     def poll(self):
-        """Change items states and return all events since the last poll
-
-        Return events for states changes (list of pycalaos.item.common.Event)
-        """
         if self._polling_id is None:
             _LOGGER.debug("Registering to the polling")
             return self._register_polling()
-        else:
-            resp = self._conn.send(
-                {"action": "poll_listen", "type": "get", "uuid": self._polling_id}
-            )
-            if resp["success"] != "true":
-                _LOGGER.debug("Polling failed, re-registering")
-                return self._register_polling()
-
-            events = []
-            for rawEvent in resp["events"]:
-                try:
-                    eventData = rawEvent["data"]
-                    itemID = eventData["id"]
-                    state = eventData["state"]
-                except:
-                    _LOGGER.debug(f"Bogus event: {rawEvent}")
-                    continue
-
-                try:
-                    item = self.items[itemID]
-                except KeyError:
-                    _LOGGER.error(f"Poll received event with unknown ID: {rawEvent}")
-                    continue
-
-                changed = item.internal_from_event(state)
-                if changed:
-                    events.append(Event(item))
+        resp = self._conn.send({"action": "poll_listen", "type": "get", "uuid": self._polling_id})
+        if resp["success"] != "true":
+            _LOGGER.debug("Polling failed, re-registering")
+            return self._register_polling()
+        events = []
+        for rawEvent in resp["events"]:
+            try:
+                eventData = rawEvent["data"]
+                itemID = eventData["id"]
+                state = eventData["state"]
+            except Exception:
+                _LOGGER.debug(f"Bogus event: {rawEvent}")
+                continue
+            try:
+                item = self.items[itemID]
+            except KeyError:
+                _LOGGER.error(f"Poll received event with unknown ID: {rawEvent}")
+                continue
+            event_state = item.internal_from_event(state)
+            if event_state is not False:
+                events.append(Event(item, event_state if event_state is not True else None))
         if len(events) > 0:
             _LOGGER.debug(f"Events: {events}")
         return events
@@ -190,16 +135,13 @@ class Client:
 
     @property
     def items(self):
-        """Items referenced by their IDs (dict of str: pycalaos.item.Item)"""
         return self._items
 
     @property
     def item_types(self):
-        """Complete list of item types currently in use"""
         return list(self._items_by_type.keys())
 
     def items_by_type(self, type):
-        """Return only the items of the given type"""
         try:
             return self._items_by_type[type]
         except KeyError:
