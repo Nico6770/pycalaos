@@ -10,6 +10,7 @@ urllib3.disable_warnings()
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class Room:
     """A room in the Calaos configuration"""
 
@@ -36,6 +37,7 @@ class Room:
     def _add_item(self, item):
         self._items.append(item)
 
+
 class _Conn:
     def __init__(self, uri, username, password):
         self._uri = f"{uri}/api.php"
@@ -47,6 +49,7 @@ class _Conn:
         request["cn_pass"] = self._password
         response = requests.post(self._uri, verify=False, json=request)
         return response.json()
+
 
 class Client:
     """A Calaos client"""
@@ -95,6 +98,7 @@ class Client:
             except KeyError:
                 _LOGGER.debug(f"Calaos event with unknown ID: {kv[0]}")
                 continue
+
             changed = item.internal_set_state(kv[1])
             if changed:
                 events.append(Event(self.items[kv[0]]))
@@ -104,10 +108,15 @@ class Client:
         if self._polling_id is None:
             _LOGGER.debug("Registering to the polling")
             return self._register_polling()
-        resp = self._conn.send({"action": "poll_listen", "type": "get", "uuid": self._polling_id})
-        if resp["success"] != "true":
-            _LOGGER.debug("Polling failed, re-registering")
-            return self._register_polling()
+        else:
+            resp = self._conn.send(
+                {"action": "poll_listen", "type": "get", "uuid": self._polling_id}
+            )
+
+            if resp["success"] != "true":
+                _LOGGER.debug("Polling failed, re-registering")
+                return self._register_polling()
+
         events = []
         for rawEvent in resp["events"]:
             try:
@@ -117,11 +126,13 @@ class Client:
             except Exception:
                 _LOGGER.debug(f"Bogus event: {rawEvent}")
                 continue
+
             try:
                 item = self.items[itemID]
             except KeyError:
                 _LOGGER.error(f"Poll received event with unknown ID: {rawEvent}")
                 continue
+
             event_state = item.internal_from_event(state)
             if event_state is not False:
                 events.append(Event(item, event_state if event_state is not True else None))
@@ -135,13 +146,16 @@ class Client:
 
     @property
     def items(self):
+        """Items referenced by their IDs (dict of str: pycalaos.item.Item)"""
         return self._items
 
     @property
     def item_types(self):
+        """Complete list of item types currently in use"""
         return list(self._items_by_type.keys())
 
     def items_by_type(self, type):
+        """Return only the items of the given type"""
         try:
             return self._items_by_type[type]
         except KeyError:
